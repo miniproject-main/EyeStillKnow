@@ -1,0 +1,4 @@
+{
+    "python.pythonPath": "face_recognition_django\\venv\\Scripts\\python.exe",
+    "git.ignoreLimitWarning": true
+}
