@@ -1,4 +1,3 @@
-# facedetection_django
 The repository contains the final code of Eye(I) still know! project
 
 Face Detection Modules:
