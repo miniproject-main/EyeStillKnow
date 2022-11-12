@@ -1,14 +1,18 @@
 from imutils.video import VideoStream
 from imutils.video import FPS
 import imutils
-import cv2,os,urllib.request,pickle
+import cv2,os,pickle
 import numpy as np
 from django.conf import settings
 from recognition import extract_embeddings
 from recognition import train_model
 import pyttsx3
 import time
+from datetime import datetime,timedelta
 import speech_recognition as sr
+import logging
+
+Facelogger = logging.getLogger("FaceRecognition")
 
 # load our serialized face detector model from disk
 protoPath = os.path.sep.join([settings.BASE_DIR, "face_detection_model/deploy.prototxt"])
@@ -31,6 +35,7 @@ class FaceDetect(object):
 		# initialize the video stream, then allow the camera sensor to warm up
 		self.vs = VideoStream(src=0).start()
 		# start the FPS throughput estimator
+		self.trackRecord = {}
 		self.fps = FPS().start()
 
 	def __del__(self):
@@ -59,18 +64,19 @@ class FaceDetect(object):
 		detector.setInput(imageBlob)
 		detections = detector.forward()
 
+                    
 		# name=unknown
-		# loop over the detections
+		
 		for i in range(0, detections.shape[2]):
 			# extract the confidence (i.e., probability) associated with
 			# the prediction
 			confidence = detections[0, 0, i, 2]
 
-			# filter out weak detections
-			if confidence > 0.5:
+			if confidence > 0.7:
 
 				# compute the (x, y)-coordinates of the bounding box for
 				# the face
+				
 				box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
 				(startX, startY, endX, endY) = box.astype("int")
 
@@ -78,13 +84,9 @@ class FaceDetect(object):
 				face = frame[startY:endY, startX:endX]
 				(fH, fW) = face.shape[:2]
 
-				# ensure the face width and height are sufficiently large
 				if fW < 20 or fH < 20:
 					continue
 
-				# construct a blob for the face ROI, then pass the blob
-				# through our face embedding model to obtain the 128-d
-				# quantification of the face
 				faceBlob = cv2.dnn.blobFromImage(face, 1.0 / 255,
 					(96, 96), (0, 0, 0), swapRB=True, crop=False)
 				embedder.setInput(faceBlob)
@@ -96,29 +98,33 @@ class FaceDetect(object):
 				j = np.argmax(preds)
 				proba = preds[j]
 				name = le.classes_[j]
-				
+				if proba>0.7:
+					if name in self.trackRecord.keys():
+							if datetime.now() - self.trackRecord[name] <= timedelta(0,5):
+								continue
+						
+					self.trackRecord[name] = datetime.now()
+					Facelogger.info(name + " added in trackRecord")
+					
+					text = "{}".format(name)
+					y = startY - 10 if startY - 10 > 10 else startY + 10
+					cv2.rectangle(frame, (startX, startY), (endX, endY),
+						(0, 0, 255), 2)
+					cv2.putText(frame, text, (startX, y),
+						cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+					SpeakText(name+" is here")
 
-
-				# draw the bounding box of the face along with the
-				# associated probability
-				# text = "{}: {:.2f}%".format(name, proba * 100)
-				text = "{}".format(name)
-				y = startY - 10 if startY - 10 > 10 else startY + 10
-				cv2.rectangle(frame, (startX, startY), (endX, endY),
-					(0, 0, 255), 2)
-				cv2.putText(frame, text, (startX, y),
-					cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
-		# while(time.sleep(5)):
-		# engine = pyttsx3.init()
-		# engine.say(name)
-		# engine.runAndWait()	
-		# engine.stop()
-		SpeakText(name+" is here")
+		
 		
 		# update the FPS counter
 		self.fps.update()
 		ret, jpeg = cv2.imencode('.jpg', frame)
 		return jpeg.tobytes()
+
+	def update(self):
+		while True:
+			(self.grabbed, self.frame) = self.video.read()
+		
 		
 def SpeakText(command):
     # Initialize the engine
@@ -146,21 +152,10 @@ class VideoCamera(object):
 		BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 		parent_dir = os.chdir(BASE_DIR)
 		parent_dir = "dataset/"
-		# parent_dir = "BASE_DIR/dataset"
-		# if s:    # frame captured without any errors
-			# namedWindow("cam-test",CV_WINDOW_AUTOSIZE)
-			# imshow("cam-test",image)
-		# cv2.waitKey(0)
-		# img = cv2.imread(image)
-		# destroyWindow("cam-test")
+
 		text = "Say the name of the person"
 		SpeakText(text)
-		# engine = pyttsx3.init()
-		# rate = engine.getProperty('rate')
-		# engine.setProperty('rate', rate-70)
-		# # pyttsx3.engine.Engine.setPropertyValue(age,'F')
-		# engine.say(text)
-		# engine.runAndWait()
+
 		while(1):
 			try:
 				with sr.Microphone() as source2:

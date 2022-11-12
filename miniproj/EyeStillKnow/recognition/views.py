@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http.response import StreamingHttpResponse
 from recognition.camera import FaceDetect,VideoCamera,SpeakText
+from recognition.objectDetection import ObjectDetect
 from django.http import HttpResponse
 import pyttsx3
 from django.shortcuts import redirect
@@ -21,9 +22,7 @@ r = sr.Recognizer()
 audio_queue = Queue()
 stop = False
 
-logging.basicConfig(filename="logs/app.log",  format='%(asctime)s - %(threadName)s - %(levelname)s - %(message)s ')
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger("App")
 # Create your views here.
 # cv2.VideoCapture(0)
 def record_worker():
@@ -93,8 +92,9 @@ def start(request):
                 stop = True
                 logger.debug("Redirecting "+str(inpcmd))
                 # return redirect('/object')
-                response = redirect('https://affectionate-kirch-815a13.netlify.app/')
-                return response
+                # response = redirect('https://affectionate-kirch-815a13.netlify.app/')
+                # return response
+                return render(request,'recognition/obj.html')
             logger.debug("Over")
         except sr.UnknownValueError:
             logger.debug("Google Speech Recognition could not understand audio")
@@ -111,6 +111,10 @@ def gen(camera):
 		
 def facecam_feed(request):
 	return StreamingHttpResponse(gen(FaceDetect()),
+					content_type='multipart/x-mixed-replace; boundary=frame')
+
+def obj_feed(request):
+	return StreamingHttpResponse(gen(ObjectDetect()),
 					content_type='multipart/x-mixed-replace; boundary=frame')
 
 # class VideoCamera(object):

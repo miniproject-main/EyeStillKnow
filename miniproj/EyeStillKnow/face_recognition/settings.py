@@ -127,10 +127,48 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static')
 ]
-# STATIC_ROOT = os.path.join(BASE_DIR, 'assets')
 
-# MEDIA_URL = '/media/'
-# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-# ALLOWED_HOSTS = ['*']
-# X_FRAME_OPTIONS = '*'
 
+LOGGING = {
+    'version':1,
+    'formatters':{
+        'simpleRe':{
+            'format': '%(levelname)3s [%(asctime)s] %(threadName)s %(process)s %(message)s',
+            'style':'%',
+        }
+    },
+    'handlers':{
+        'file1':{
+            'level':'DEBUG',
+            'class':'logging.FileHandler',
+            'filename':'./logs/FaceRecognition.log',
+            'formatter':'simpleRe',
+        },
+        'file2':{
+            'level':'DEBUG',
+            'class':'logging.FileHandler',
+            'filename':'./logs/ObjectRecognition.log',
+            'formatter':'simpleRe',
+        },
+        'file3':{
+            'level':'DEBUG',
+            'class':'logging.FileHandler',
+            'filename':'./logs/App.log',
+            'formatter':'simpleRe',
+        }
+    },
+    'loggers':{
+        'FaceRecognition':{
+            'handlers':['file1'],
+            'level':'DEBUG'
+        },
+        'ObjectRecognition':{
+            'handlers':['file2'],
+            'level':'DEBUG'
+        },
+        'App':{
+            'handlers':['file3'],
+            'level':'DEBUG'
+        }
+    }
+}
