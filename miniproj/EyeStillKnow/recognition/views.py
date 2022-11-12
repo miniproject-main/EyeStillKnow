@@ -73,22 +73,23 @@ def start(request):
             # for testing purposes, we're just using the default API key
             # to use another API key, use `r.recognize_google(audio, key="GOOGLE_SPEECH_RECOGNITION_API_KEY")`
             # instead of `r.recognize_google(audio)`
-            inpcmd = r.recognize_google(audio)
+            inpcmd = "detect object please"
+            # inpcmd = r.recognize_google(audio).lower()
             logger.debug("Command is: "+str(inpcmd))
-            if inpcmd=="new":
+            if (("new" in inpcmd) or ("add" in inpcmd)) and ("face" in inpcmd):
                 stop = True
                 logger.debug("Redirecting "+str(inpcmd))
                 # return redirect('/new')
                 return StreamingHttpResponse(gen(VideoCamera()),
                     content_type="multipart/x-mixed-replace;boundary=frame")
 
-            elif inpcmd=="face":
+            elif "face" in inpcmd:
                 stop = True
                 logger.debug("Redirecting "+str(inpcmd))
                 # return redirect('/face')
                 return render(request,'recognition/home.html')
 
-            elif inpcmd=="object":
+            elif "object" in inpcmd:
                 stop = True
                 logger.debug("Redirecting "+str(inpcmd))
                 # return redirect('/object')

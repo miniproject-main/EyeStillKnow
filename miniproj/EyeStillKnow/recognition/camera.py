@@ -124,7 +124,7 @@ def SpeakText(command):
     # Initialize the engine
 	engine = pyttsx3.init()
 	rate = engine.getProperty('rate')
-	engine.setProperty('rate', rate-70)
+	engine.setProperty('rate', rate-20)
 	engine.say(command) 
 	print(command)
 	engine.runAndWait()
